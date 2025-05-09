@@ -1,5 +1,7 @@
 <?php
 require 'config.php';
+session_start();
+// Insert new user into the database
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -38,12 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main>
         <p>Rekisteröidy käyttämään ostoslistapalvelua.</p>
     </main>
-<form method="POST" action="registration.php">
-    <label for="username">Käyttäjätunnus:</label>
-    <input type="text" name="username" id="username" required>
-    <label for="password">Salasana:</label>
-    <input type="password" name="password" id="password" required>
-    <button class="register-btn" type="submit">Rekisteröidy</button>
+<form method="POST" action="registration.php"> 
+    <label for="username" >Käyttäjätunnus:</label>
+    <input type="text" name="username" id="username" style='display:flex;' required>
+    <p><label for="password">Salasana:</label>
+    <input type="password" name="password" id="password" style='display:flex;' required></p></p>
+    <p><button class="register-btn" type="submit">Rekisteröidy</button></p>
+    <p>Onko sinulla jo tili? <a href="login.php" class="login-btn">Kirjaudu sisään</a></p>
     <?php if (isset($error)): ?>
         <p style="color: red;"><?= htmlspecialchars($error) ?></p>
     <?php endif; ?>

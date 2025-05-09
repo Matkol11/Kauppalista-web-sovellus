@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
 session_start();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -38,9 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <form method="POST" action="login.php">
         <label for="username">Käyttäjätunnus:</label>
-        <input type="text" name="username" id="username" required>
-        <label for="password">Salasana:</label>
-        <input type="password" name="password" id="password" required>
+        <input type="text" name="username" id="username" style='display:flex;' required>
+        <p><label for="password">Salasana:</label>
+        <input type="password" name="password" id="password" style='display:flex;' required></p></p>
         <p><button type="submit" class="login-btn">Kirjaudu sisään</button></p>
         <?php if (isset($error)): ?>
             <p style="color: red;"><?= htmlspecialchars($error) ?></p>

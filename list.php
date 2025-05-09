@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
- //new list creation
+ // New list creation
 if (!isset($_GET['id']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
   $title = trim($_POST['title'] ?? '');
   if ($title === '') {
@@ -19,7 +19,44 @@ if (!isset($_GET['id']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
   }
 }
-// check if list ID is provided in the URL
+
+// Handle list sharing
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset($_GET['id'])) {
+  $listId = (int)$_GET['id'];
+  $username = trim($_POST['username'] ?? '');
+  if ($username === '') {
+    $error = 'Anna käyttäjätunnus.';
+  } else {
+    // Check if current user is the owner
+    $stmt = $pdo->prepare("SELECT user_id FROM lists WHERE id = ?");
+    $stmt->execute([$listId]);
+    $listOwner = $stmt->fetchColumn();
+    if ($listOwner != $_SESSION['user_id']) {
+        $error = "Vain omistaja voi jakaa listan.";
+    } else {
+      // Find the user to share with
+      $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+      $stmt->execute([$username]);
+      $sharedWithUser = $stmt->fetch();
+        if (!$sharedWithUser) {
+          $error = "Käyttäjätunnusta ei löytynyt.";
+      } else {
+        // Prevent duplicate sharing
+        $stmt = $pdo->prepare("SELECT 1 FROM shared_lists WHERE list_id = ? AND shared_with_user_id = ?");
+        $stmt->execute([$listId, $sharedWithUser['id']]);
+        if ($stmt->fetch()) {
+            $error = "Lista on jo jaettu tälle käyttäjälle.";
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO shared_lists (list_id, shared_with_user_id) VALUES (?, ?)");
+            $stmt->execute([$listId, $sharedWithUser['id']]);
+            $success = "Lista jaettu onnistuneesti.";
+        }
+      }
+    }
+  }
+}
+
+// Gets the list ID from the URL
 if (isset($_GET['id'])) {
   $listId = (int)$_GET['id'];
 }
@@ -50,8 +87,8 @@ if (isset($_GET['id'])) {
     header("Location: list.php?id=$listId");
     exit;
   }
-
-  // handle delete-item request
+ 
+  // Handle delete-item request
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_item_id'])) {
     $itemId = (int)$_POST['delete_item_id'];
     $stmt = $pdo->prepare("DELETE FROM items WHERE id = ? AND list_id = ?");
@@ -60,11 +97,26 @@ if (isset($_GET['id'])) {
     exit;
   }
 
-  // fetch list & items
-  $stmt = $pdo->prepare("SELECT * FROM lists WHERE id = ? AND user_id = ?");
-  $stmt->execute([$listId, $_SESSION['user_id']]);
+  // Fetch owned or shared lists
+  // and check if the user is allowed to view it
+  $stmt = $pdo->prepare("
+    SELECT lists.id, lists.title, lists.created_at, lists.user_id,
+           CASE
+             WHEN lists.user_id = ? THEN
+               (SELECT COUNT(*) FROM shared_lists WHERE shared_lists.list_id = lists.id) > 0
+             ELSE 1
+           END AS is_shared
+    FROM lists
+    LEFT JOIN shared_lists ON lists.id = shared_lists.list_id
+    WHERE lists.id = ? AND (lists.user_id = ? OR shared_lists.shared_with_user_id = ?)
+    GROUP BY lists.id
+  ");
+  $stmt->execute([$_SESSION['user_id'], $listId, $_SESSION['user_id'], $_SESSION['user_id']]);
   $list = $stmt->fetch();
-  if (!$list) { echo "List not found."; exit; }
+  if(!$list) {
+    header("Location: index.php");
+    exit;
+  }
   $stmt = $pdo->prepare("SELECT * FROM items WHERE list_id = ? ORDER BY created_at DESC");
   $stmt->execute([$listId]);
   $items = $stmt->fetchAll();
@@ -106,6 +158,7 @@ if (isset($_GET['id'])) {
         type="text"
         name="title"
         placeholder="Uusi lista"
+        maxlength="26"
         required
         class="input-item"
       >
@@ -119,6 +172,23 @@ if (isset($_GET['id'])) {
     <h2><?= htmlspecialchars($list['title']) ?></h2>
     <a href="logout.php" class="logout-btn">Kirjaudu Ulos</a>
   </header>
+  <?php if (isset($error)): ?>
+  <div class="error"><?= htmlspecialchars($error) ?></div>
+  <?php endif; ?>
+  <?php if (isset($success)): ?>
+  <div class="success"><?= htmlspecialchars($success) ?></div>
+  <?php endif; ?>  
+  <form method="post" class="share-list-form" onsubmit="return confirm('Haluatko jakaa tämän listan? Et voi perua jakamista.');">
+  <label style = "font-size: 1.2rem;">Jaa lista toiselle käyttäjälle:</label>
+  <input
+    type="text"
+    name="username"
+    placeholder="Käyttäjän käyttäjätunnus"
+    required
+    class="input-share"
+  >
+  <button type="submit" class="btn-share">Jaa</button>
+</form>
   <form method="post" class="add-item-form">
     <button type="submit" class="btn-add"><span>＋</span></button>
     <input
@@ -126,12 +196,14 @@ if (isset($_GET['id'])) {
       name="item_name"
       placeholder="Tuote"
       required
+      maxlength="30"
       class="input-item"
     >
     <input
       type="number"
       name="price"
       placeholder="Hinta"
+      step ="0.01"
       class="input-price"
     >
   </form>
@@ -161,6 +233,7 @@ $editingId = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
                 type="number"
                 name="edit_item_price"
                 value="<?= htmlspecialchars($item['price']) ?>"
+                step ="0.01"
                 class="input-price edit-input"
               >
               <button type="submit" class="btn-edit">💾</button>

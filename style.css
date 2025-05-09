@@ -5,35 +5,36 @@
   font-family: sans-serif;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
-    padding-top: 40px;
-    padding-bottom: 40px;
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: #eee;
-  }
+  display:flex;
+  flex-direction: column;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #eee;
+}
 
 header {
   display: block;
   align-items: center;
   text-align: center;
-  margin-bottom: 40px;
 }
 
 footer {
-  display: block;
-  align-items: center;
-  text-align: center;
-  margin-top: 30px;
+margin-top: auto;
 }
 
 h1 {
-    font-size: 3rem;
-  }
+  font-size: 2rem;
+}
 
 h2 {
-    font-size: 3rem;
-  }
+  font-size: 2.5rem;
+}
+
 
 .button {
   display: inline-flex;
@@ -88,6 +89,19 @@ h2 {
   background-color: #c82333;
 }
 
+.name-prompt {
+  font-size: 2rem;
+  color: #202020;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.name-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
 .list-overview li {
   list-style: none;
   width: auto; height: auto;
@@ -104,6 +118,11 @@ h2 {
   font-size: 2rem;
   color: #000000;
   text-decoration: none;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  text-overflow: ellipsis;
 }
 
 
@@ -129,7 +148,6 @@ h2 {
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid #ddd;
-  margin-bottom: 20px;
 }
 .header-bar h1 {
   position: absolute;
@@ -162,6 +180,34 @@ h2 {
   background-color: #800;
   border-radius: 50%;
   padding: 4px;
+}
+
+.share-list-form {
+  height: 30px;
+  display: flex;
+  justify-content: end;
+  align-items: end;
+  margin-top: 30px;
+}
+.input-share {
+  width: 40%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  font-size: 1rem;
+}
+.btn-share {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  color: #272727;
+  background-color: #ffffff;
+  text-decoration: none;
+}
+
+.btn-share:hover {
+  background-color: #f0f0f0;
 }
 
 .add-item-form {
